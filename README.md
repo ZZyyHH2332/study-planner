@@ -1,8 +1,8 @@
-# Study Planner — 自适应间隔复习系统
+# Study Planner — 基于学习者行为与特征的个性化学习 AI
 
 ## 项目宗旨
 
-**让 Obsidian 笔记变成一个懂你的自适应学习系统。**
+**让 Obsidian 笔记变成一个懂你的个性化学习 AI。**
 
 传统 Zettelkasten 方法擅长知识收集和链接，但缺少两个关键能力：
 
@@ -301,6 +301,53 @@ knowledge_edges     bkt_engine    fsrs_engine
 - [x] **Phase 3** — 自适应引擎（路径生成 + 缺口检测 + IRT 自测）
 
 - [x] **Phase 4** — 数据看板（ECharts 可视化 + 参数校准 + 元认知 + 数据导入导出）
+
+***
+
+## 关联项目：TRAE Memory System
+
+本项目使用 [trae-memory-system](https://github.com/ZZyyHH2332/trae-memory-system) 作为开发记忆基础设施。
+
+### 协作关系
+
+| 维度   | Study Planner                         | TRAE Memory System              |
+| ---- | ------------------------------------- | ------------------------------- |
+| 角色   | 学习者自适应系统（终端用户产品）                      | 开发者记忆系统（AI 助手基础设施）              |
+| 数据   | 学习者的掌握度、复习记录、知识图谱                     | 开发决策、项目状态、经验教训                  |
+| 存储   | SQLite + Obsidian frontmatter         | Markdown 文件（D 盘 + junction）     |
+| 用户   | 终端学习者                                 | AI 助手（TRAE）                     |
+| 依赖方向 | Study Planner 的开发过程被 memory system 记录 | Memory system 不依赖 study-planner |
+
+### 数据隔离
+
+- **Study Planner 的数据**（knowledge\_nodes, review\_log, learner\_profile）存储在 SQLite，路径由 config.json 的 db\_path 指定
+
+- **Memory System 的数据**（project\_memory.md, status.md, decisions.md）存储在 `~/.trae-cn/memory/`（junction 到 D 盘）
+
+- 两套数据完全独立，不交叉读写，不共享表
+
+### 开发协作流程
+
+```
+开发 Study Planner
+  → AI 助手读取 memory system 的 status.md 获取上下文
+  → AI 助手读取 project_memory.md 获取项目规范
+  → 开发过程中做关键决策 → 写入 decisions.md
+  → 会话结束 → 更新 status.md
+  → AI 助手运行 compile_memory.py → 生成 BRAIN.md
+
+Study Planner 运行时
+  → 不触碰 memory system
+  → 只读写 SQLite + Obsidian frontmatter
+  → 面向终端用户的学习行为
+```
+
+### 注意事项
+
+1. **不要混淆两套记忆** — Study Planner 的"学习者画像"（profile\_manager）是给学习者的，Memory System 的"user\_profile.md"是给 AI 助手的
+2. **Memory System 的 junction 迁移** — 如果 D 盘路径变更，需更新 junction（见 trae-memory-system 仓库的 README）
+3. **session 日志丢失** — 2026-09-01 迁移过程中丢失了部分会话日志，已从代码和对话重建 project\_memory.md 和 decisions.md，详见 trae-memory-system 的 lessons.md
+4. **Memory System 不随 Study Planner 发布** — Memory System 是开发工具，不是终端用户的依赖。Study Planner 的用户不需要安装 memory system
 
 ***
 
