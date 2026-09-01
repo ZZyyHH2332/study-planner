@@ -110,6 +110,21 @@ def start_review(config):
 
     summary = session.end(notes=f"Reviewed {len(session.reviews)} cards")
     print_review_summary(summary)
+
+    # Auto metacognition check after review
+    if len(session.reviews) > 0:
+        try:
+            import metacognition
+            diag = metacognition.diagnose(config=config)
+            if diag["alerts"]:
+                print(f"\n  {YELLOW}⚠ 元认知诊断发现 {len(diag['alerts'])} 个问题:{RESET}")
+                for a in diag["alerts"][:2]:
+                    sev_color = RED if a["severity"] == "high" else YELLOW
+                    print(f"    {sev_color}[{a['severity'].upper()}]{RESET} {a['title']}: {a['diagnosis'][:40]}...")
+                print(f"  {DIM}详情请看 [8] 数据看板 → 元认知诊断面板{RESET}")
+        except Exception:
+            pass
+
     input(f"\n  {DIM}按回车返回菜单...{RESET}")
 
 
