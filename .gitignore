@@ -1,0 +1,30 @@
+# Database
+data/
+*.db
+*.db-journal
+
+# User config (contains personal paths)
+config.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Obsidian
+.obsidian/
+
+# OS
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+
+# Attachments (user data, not for public repo)
+attachments/

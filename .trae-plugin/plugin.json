@@ -1,0 +1,39 @@
+{
+  "name": "study-planner",
+  "version": "0.1.0",
+  "description": "基于 Zettelkasten 的自适应学习管理插件，通过知识图谱 + BKT/FSRS 双引擎拟合个人学习曲线",
+  "author": {
+    "name": "zyh97"
+  },
+  "license": "UNLICENSED",
+  "keywords": [
+    "study",
+    "learning",
+    "zettelkasten",
+    "spaced-repetition",
+    "adaptive-learning",
+    "obsidian"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Study Planner",
+    "shortDescription": "自适应学习管理：Zettelkasten 知识库 + 间隔重复 + 学习路径推荐",
+    "longDescription": "基于 Zettelkasten 卡片盒法构建个人知识库，通过 BKT 贝叶斯知识追踪和 FSRS 间隔重复算法拟合个人学习曲线，自适应生成学习路径和复习计划。与 Obsidian Vault 深度集成。",
+    "developerName": "zyh97",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Create a study plan for my exam preparation",
+      "Review my learning progress and knowledge gaps",
+      "Scan my Obsidian vault and build knowledge graph"
+    ],
+    "brandColor": "#6c5ce7",
+    "composerIcon": "./assets/icon.svg",
+    "logo": "./assets/icon.svg",
+    "screenshots": []
+  }
+}

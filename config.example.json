@@ -1,0 +1,22 @@
+{
+  "vault_path": "/path/to/your/Obsidian/Vault",
+  "db_path": "/path/to/study-planner/data/study_planner.db",
+  "mastery_threshold": 0.7,
+  "review_zone": [0.6, 0.8],
+  "bkt_defaults": {
+    "p_init": 0.1,
+    "p_transit": 0.3,
+    "p_slip": 0.1,
+    "p_guess": 0.2
+  },
+  "fsrs_defaults": {
+    "ease_factor": 2.5,
+    "interval_modifier": 1.0
+  },
+  "note_types": {
+    "fleeting": { "folder": "00_Inbox", "tags": ["inbox", "fleeting"] },
+    "literature": { "folder": "10_Sources", "tags": ["source", "literature"] },
+    "permanent": { "folder": "20_Zettelkasten", "tags": ["permanent"] },
+    "moc": { "folder": "30_MOCs", "tags": ["moc"] }
+  }
+}
