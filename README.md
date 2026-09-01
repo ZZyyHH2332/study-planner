@@ -5,35 +5,42 @@
 **让 Obsidian 笔记变成一个懂你的自适应学习系统。**
 
 传统 Zettelkasten 方法擅长知识收集和链接，但缺少两个关键能力：
+
 1. **遗忘追踪** — 不知道哪些笔记快要忘了
 2. **学习路径** — 不知道应该先学什么、再学什么
 
 Study Planner 解决这两个问题：
 
 - 用 **BKT（贝叶斯知识追踪）** 追踪每个概念的掌握概率
+
 - 用 **FSRS（自由间隔重复调度）** 安排最优复习时间
+
 - 用 **DAG 拓扑排序 + Dijkstra** 生成尊重前置依赖的学习路径
+
 - 用 **IRT（项目反应理论）** 选择难度匹配的自测题目
 
 ### 核心差异
 
-| 维度 | Anki / SuperMemo | Study Planner |
-|------|------------------|---------------|
-| 知识结构 | 孤立卡片 | 知识图谱 DAG |
-| 学习顺序 | 随机 / 手动 | 拓扑排序 + 最优路径 |
-| 掌握度模型 | 简单分级 | BKT 概率追踪 |
-| 复习调度 | SM-2 / FSRS | FSRS |
-| 题目选择 | 固定 | IRT 自适应 |
-| 数据存储 | 专有格式 | Obsidian 笔记 frontmatter |
+| 维度    | Anki / SuperMemo | Study Planner           |
+| ----- | ---------------- | ----------------------- |
+| 知识结构  | 孤立卡片             | 知识图谱 DAG                |
+| 学习顺序  | 随机 / 手动          | 拓扑排序 + 最优路径             |
+| 掌握度模型 | 简单分级             | BKT 概率追踪                |
+| 复习调度  | SM-2 / FSRS      | FSRS                    |
+| 题目选择  | 固定               | IRT 自适应                 |
+| 数据存储  | 专有格式             | Obsidian 笔记 frontmatter |
 
 ### 设计哲学
 
 - **笔记是真相源** — SQLite 数据库是缓存，frontmatter 是主数据
+
 - **零摩擦** — 桌面快捷方式双击即用，无需记命令
+
 - **数据主权** — 所有数据存储在本地，无云端依赖
+
 - **可扩展** — 模块化架构，每个引擎独立可替换
 
----
+***
 
 ## 架构总览
 
@@ -64,10 +71,19 @@ Study Planner 解决这两个问题：
                             │                          │
                             │  quiz_selector.py        │
                             │  (IRT Rasch 模型)         │
+                            └─────────────┬────────────┘
+                                          │
+                            ┌─────────────▼────────────┐
+                            │  Phase 4: 看板+校准     │
+                            │                          │
+                            │  dashboard.py (ECharts)  │
+                            │  param_calibrator.py     │
+                            │  metacognition.py        │
+                            │  data_io.py              │
                             └──────────────────────────┘
 ```
 
----
+***
 
 ## 核心算法
 
@@ -75,12 +91,12 @@ Study Planner 解决这两个问题：
 
 四个参数追踪知识掌握概率：
 
-| 参数 | 含义 | 默认值 |
-|------|------|--------|
-| P(L0) | 初始掌握概率 | 0.1 |
-| P(T) | 每次学习后过渡到掌握的概率 | 0.3 |
-| P(S) | 已掌握但答错的概率（失误） | 0.1 |
-| P(G) | 未掌握但答对的概率（猜测） | 0.25 |
+| 参数    | 含义            | 默认值  |
+| ----- | ------------- | ---- |
+| P(L0) | 初始掌握概率        | 0.1  |
+| P(T)  | 每次学习后过渡到掌握的概率 | 0.3  |
+| P(S)  | 已掌握但答错的概率（失误） | 0.1  |
+| P(G)  | 未掌握但答对的概率（猜测） | 0.25 |
 
 每次复习后通过贝叶斯更新：`P(L|response) → P(L_new) = P(L|response) + (1-P(L|response)) × P(T)`
 
@@ -88,12 +104,12 @@ Study Planner 解决这两个问题：
 
 四级评分体系：
 
-| 评分 | 含义 | 间隔效果 |
-|------|------|----------|
-| 1 = Again | 完全忘了 | 重置为 0，ease -0.2 |
-| 2 = Hard | 勉强想起 | 间隔 ×1.2，ease -0.15 |
-| 3 = Good | 正常回忆 | 间隔 ×ease |
-| 4 = Easy | 瞬间记起 | 间隔 ×ease×1.3 |
+| 评分        | 含义   | 间隔效果               |
+| --------- | ---- | ------------------ |
+| 1 = Again | 完全忘了 | 重置为 0，ease -0.2    |
+| 2 = Hard  | 勉强想起 | 间隔 ×1.2，ease -0.15 |
+| 3 = Good  | 正常回忆 | 间隔 ×ease           |
+| 4 = Easy  | 瞬间记起 | 间隔 ×ease×1.3       |
 
 ### 学习路径生成
 
@@ -113,10 +129,12 @@ P(correct | θ, b) = exp(θ - b) / (1 + exp(θ - b))
 ```
 
 - θ = 学习者能力（从 BKT mastery 经 logit 变换得到）
-- b = 题目难度（从笔记 difficulty 1-5 映射到 -2 ~ +2）
-- ZPD 区间：P(correct) ∈ [0.6, 0.8] — 既不太容易也不太难
 
----
+- b = 题目难度（从笔记 difficulty 1-5 映射到 -2 \~ +2）
+
+- ZPD 区间：P(correct) ∈ \[0.6, 0.8] — 既不太容易也不太难
+
+***
 
 ## 项目结构
 
@@ -139,30 +157,36 @@ study-planner/
 │   │   │   ├── bkt_engine.py        # 贝叶斯知识追踪
 │   │   │   ├── fsrs_engine.py       # 间隔重复调度
 │   │   │   ├── profile_manager.py   # 学习者画像
-│   │   │   └── session_sync.py      # 会话级同步
+│   │   │   ├── session_sync.py      # 会话级同步
+│   │   │   ├── dashboard.py        # ECharts 数据看板
+│   │   │   ├── param_calibrator.py  # BKT/FSRS 参数校准
+│   │   │   └── data_io.py           # 数据导出/导入
 │   │   └── references/
 │   │       ├── data-model.md        # 数据库 schema
 │   │       ├── note-templates.md     # frontmatter 模板
 │   │       └── bkt-fsrs-spec.md     # BKT/FSRS 规格
-│   └── adaptive-engine/            # Phase 3
+│   └── adaptive-engine/            # Phase 3 + 4
 │       ├── SKILL.md
 │       ├── scripts/
 │       │   ├── path_generator.py    # 学习路径生成
 │       │   ├── gap_detector.py      # 知识缺口检测
-│       │   └── quiz_selector.py     # IRT 题目选择
+│       │   ├── quiz_selector.py     # IRT 题目选择
+│       │   └── metacognition.py     # 元认知/慢思考层
 │       └── references/
 │           └── path-algorithms.md   # 算法规格
 └── verify_*.py                     # 各阶段验证脚本
 ```
 
----
+***
 
 ## 快速开始
 
 ### 前置条件
 
 - Python 3.8+
+
 - Obsidian Vault（已有 Zettelkasten 笔记）
+
 - PyYAML（可选，推荐安装以获得更好的 frontmatter 解析）
 
 ### 安装
@@ -201,6 +225,8 @@ pip install pyyaml
   [5] 生成学习路径
   [6] 知识缺口检测
   [7] IRT 自测
+  [8] 查看数据看板
+  [9] 数据管理
   [0] 退出
 ```
 
@@ -237,7 +263,7 @@ ease_factor: 2.50
 ---
 ```
 
----
+***
 
 ## 数据流
 
@@ -264,16 +290,19 @@ knowledge_edges     bkt_engine    fsrs_engine
                                (targeted line replace)
 ```
 
----
+***
 
 ## 路线图
 
 - [x] **Phase 1** — 知识库（Vault 扫描 + DAG + SQLite）
-- [x] **Phase 2** — 学习者模型（BKT + FSRS + 画像 + 会话同步）
-- [x] **Phase 3** — 自适应引擎（路径生成 + 缺口检测 + IRT 自测）
-- [ ] **Phase 4** — 数据看板（HTML 可视化 + 参数校准 + 数据导入导出）
 
----
+- [x] **Phase 2** — 学习者模型（BKT + FSRS + 画像 + 会话同步）
+
+- [x] **Phase 3** — 自适应引擎（路径生成 + 缺口检测 + IRT 自测）
+
+- [x] **Phase 4** — 数据看板（ECharts 可视化 + 参数校准 + 元认知 + 数据导入导出）
+
+***
 
 ## License
 

@@ -28,6 +28,8 @@ from session_sync import StudySession
 import path_generator
 import gap_detector
 import quiz_selector
+import dashboard
+import data_io
 
 BOLD = "\033[1m"
 DIM = "\033[2m"
@@ -84,6 +86,8 @@ def show_main_menu(config):
     print(f"  [{BOLD}5{RESET}] 生成学习路径")
     print(f"  [{BOLD}6{RESET}] 知识缺口检测")
     print(f"  [{BOLD}7{RESET}] IRT 自测")
+    print(f"  [{BOLD}8{RESET}] 查看数据看板")
+    print(f"  [{BOLD}9{RESET}] 数据管理")
     print(f"  [{BOLD}0{RESET}] 退出")
     print()
 
@@ -473,6 +477,87 @@ def start_quiz(config):
     input(f"\n  {DIM}按回车返回菜单...{RESET}")
 
 
+def show_dashboard(config):
+    print_header()
+    print(f"  {BOLD}生成数据看板...{RESET}\n")
+    path = dashboard.generate_dashboard(config=config)
+    print(f"  {GREEN}✓ 看板已生成并在浏览器打开{RESET}")
+    print(f"  {DIM}文件: {path}{RESET}")
+    print()
+    input(f"  {DIM}按回车返回菜单...{RESET}")
+
+
+def show_data_management(config):
+    print_header()
+    print(f"  {BOLD}数据管理{RESET}\n")
+    print(f"  [{BOLD}1{RESET}] 导出 JSON 备份")
+    print(f"  [{BOLD}2{RESET}] 导出复习记录 CSV")
+    print(f"  [{BOLD}3{RESET}] 导入 JSON 备份")
+    print(f"  [{BOLD}4{RESET}] 参数自动校准")
+    print(f"  [{BOLD}5{RESET}] 元认知诊断")
+    print(f"  [{BOLD}0{RESET}] 返回")
+    print()
+    choice = input(f"  {BOLD}选择:{RESET} ").strip()
+
+    if choice == "1":
+        path = data_io.export_to_json(config=config)
+        print(f"\n  {GREEN}✓ 备份已导出{RESET}")
+        print(f"  {DIM}文件: {path}{RESET}")
+    elif choice == "2":
+        path = data_io.export_review_csv(config=config)
+        if path:
+            print(f"\n  {GREEN}✓ CSV 已导出{RESET}")
+            print(f"  {DIM}文件: {path}{RESET}")
+        else:
+            print(f"\n  {YELLOW}暂无复习记录{RESET}")
+    elif choice == "3":
+        json_path = input(f"  {BOLD}JSON 文件路径:{RESET} ").strip()
+        if json_path and Path(json_path).exists():
+            result = data_io.import_from_json(json_path, config=config)
+            print(f"\n  {GREEN}✓ 导入完成{RESET}")
+            for table, count in result["table_counts"].items():
+                print(f"    {table}: {count} 条")
+        else:
+            print(f"\n  {RED}文件不存在{RESET}")
+    elif choice == "4":
+        import param_calibrator
+        print(f"\n  {DIM}校准中...{RESET}")
+        result = param_calibrator.calibrate_parameters(config=config)
+        if result["status"] == "skipped":
+            print(f"  {YELLOW}{result['reason']}{RESET}")
+        else:
+            print(f"  {GREEN}✓ 校准完成{RESET}")
+            print(f"    复习样本: {result['total_reviews']}")
+            bkt = result["bkt"]
+            if bkt["after"]["p_transit"] is not None:
+                print(f"    P(T): {bkt['before']['p_transit']} → {bkt['after']['p_transit']}")
+            if bkt["after"]["p_slip"] is not None:
+                print(f"    P(S): {bkt['before']['p_slip']} → {bkt['after']['p_slip']}")
+            if bkt["after"]["p_guess"] is not None:
+                print(f"    P(G): {bkt['before']['p_guess']} → {bkt['after']['p_guess']}")
+            fsrs = result["fsrs"]
+            print(f"    Ease: {fsrs['before']} → {fsrs['after']['new_ease']}")
+    elif choice == "5":
+        import metacognition
+        print(f"\n  {DIM}分析中...{RESET}")
+        result = metacognition.diagnose(config=config)
+        print(f"\n  {BOLD}元认知诊断{RESET}")
+        print(f"  {result['summary']}")
+        print()
+        for alert in result["alerts"]:
+            severity_color = RED if alert["severity"] == "high" else YELLOW
+            print(f"  {severity_color}[{alert['severity'].upper()}]{RESET} "
+                  f"{BOLD}{alert['title']}{RESET}")
+            print(f"    {DIM}类型:{RESET} {alert['type']}")
+            print(f"    {DIM}诊断:{RESET} {alert['diagnosis']}")
+            print(f"    {DIM}建议:{RESET} {alert['action']}")
+            print()
+        for rec in result["recommendations"]:
+            print(f"  {CYAN}→ {rec}{RESET}")
+    print()
+    input(f"  {DIM}按回车返回菜单...{RESET}")
+
+
 def main():
     config = db_manager.load_config()
     db_manager.init_database(config)
@@ -496,6 +581,10 @@ def main():
             show_gap_detection(config)
         elif choice == "7":
             start_quiz(config)
+        elif choice == "8":
+            show_dashboard(config)
+        elif choice == "9":
+            show_data_management(config)
         elif choice == "0":
             print(f"\n  {DIM}再见！{RESET}")
             break
