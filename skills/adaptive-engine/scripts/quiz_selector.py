@@ -112,13 +112,12 @@ def load_item_bank(config=None):
 def _generate_items_from_node(node, config):
     """Auto-generate quiz items from a knowledge node's metadata.
 
-    Generates one item per concept_type:
-    - definition → recall item ("What is X?")
-    - claim → analysis item ("Explain why X is true")
-    - process → application item ("Apply X to solve Y")
+    Two layers:
+    1. IRT metadata (b_param, theta, p_correct) — used for ZPD selection
+    2. AI prompt template — used by TRAE to generate the actual question text
 
-    These are item *templates* — the actual question text is a prompt
-    for the AI to elaborate during a study session.
+    The AI prompt is generated via question_prompts.generate_prompt(), which
+    reads the note content and creates a difficulty-adaptive prompt.
     """
     note_id = node["note_id"]
     title = node.get("title", note_id)
@@ -130,38 +129,38 @@ def _generate_items_from_node(node, config):
     theta = map_mastery_to_ability(mastery)
     p_correct = rasch_probability(theta, b)
 
-    templates = {
-        "definition": {
-            "item_type": "recall",
-            "question": f"定义：{title}",
-            "answer_hint": f"回顾 {title} 的核心定义和关键组成部分",
-        },
-        "claim": {
-            "item_type": "analysis",
-            "question": f"论证：{title}",
-            "answer_hint": f"解释 {title} 的机制和证据支持",
-        },
-        "process": {
-            "item_type": "application",
-            "question": f"应用：{title}",
-            "answer_hint": f"将 {title} 应用到一个新的场景中",
-        },
-    }
-
-    template = templates.get(concept_type, templates["definition"])
+    # Generate AI prompt via question_prompts module
+    try:
+        import question_prompts
+        prompt_data = question_prompts.generate_prompt(node, mastery=mastery, config=config)
+        ai_prompt = prompt_data["prompt"]
+        bloom_level = prompt_data["bloom_level"]
+        difficulty_level = prompt_data["difficulty"]
+        scenario_hint = prompt_data.get("scenario_hint", "")
+        scoring_prompt = question_prompts.format_scoring_prompt(prompt_data)
+    except Exception:
+        ai_prompt = f"请回答关于「{title}」的问题"
+        bloom_level = "理解"
+        difficulty_level = "intermediate"
+        scenario_hint = ""
+        scoring_prompt = ""
 
     return [{
         "id": f"{note_id}_auto",
         "note_id": note_id,
         "title": title,
-        "question": template["question"],
-        "answer_hint": template["answer_hint"],
-        "item_type": template["item_type"],
+        "question": ai_prompt,
+        "answer_hint": f"AI 根据 {concept_type} 类型生成 {difficulty_level} 级别题目",
+        "item_type": concept_type,
         "difficulty": difficulty,
         "b_param": b,
         "theta": theta,
         "p_correct": round(p_correct, 4),
-        "source": "auto",
+        "source": "ai_prompt",
+        "bloom_level": bloom_level,
+        "difficulty_level": difficulty_level,
+        "scenario_hint": scenario_hint,
+        "scoring_prompt": scoring_prompt,
     }]
 
 

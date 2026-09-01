@@ -59,7 +59,8 @@ class StudySession:
         return self.session_id
 
     def review(self, note_id, rating, correct, domain="default",
-               content_type=None):
+               content_type=None, question=None, scoring_criteria=None,
+               user_answer=None, evaluation=None):
         """Process a single review during the session.
 
         Args:
@@ -68,6 +69,10 @@ class StudySession:
             correct: Boolean
             domain: Knowledge domain for BKT params
             content_type: Content type for affinity tracking
+            question: AI-generated question text (optional, AI mode)
+            scoring_criteria: Scoring criteria dict (optional, AI mode)
+            user_answer: User's answer text (optional, AI mode)
+            evaluation: Evaluation result dict (optional, AI mode)
 
         Returns:
             dict with BKT and FSRS results
@@ -98,13 +103,22 @@ class StudySession:
 
         self._update_review_log_fsrs(note_id, fsrs_result)
 
-        self.reviews.append({
+        review_entry = {
             "note_id": note_id,
             "rating": rating,
             "correct": correct,
             "bkt": bkt_result,
             "fsrs": fsrs_result,
-        })
+        }
+
+        # AI mode: store question + scoring + answer in session short-term memory
+        if question:
+            review_entry["question"] = question
+            review_entry["scoring_criteria"] = scoring_criteria
+            review_entry["user_answer"] = user_answer
+            review_entry["evaluation"] = evaluation
+
+        self.reviews.append(review_entry)
         self.updated_nodes.add(note_id)
 
         return {**bkt_result, **fsrs_result}
