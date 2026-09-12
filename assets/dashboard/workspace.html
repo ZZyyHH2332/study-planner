@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<meta name="referrer" content="no-referrer">
+<title>Study Planner · 今日学习工作台</title>
+<style>__STYLES__</style>
+</head>
+<body>
+<a class="skip-link" href="#main">跳到主要内容</a>
+<div class="app-shell">
+<aside class="sidebar">
+  <a class="brand" href="#today" aria-label="Study Planner 首页"><span class="brand-mark">s<span>p</span></span><span>study planner<small>让知识，真正留下来。</small></span></a>
+  <div class="side-label">学习空间 / WORKSPACE</div>
+  <nav aria-label="主导航">
+    <button class="nav-item active" data-view="today"><span class="nav-icon">◷</span>今日学习<span class="nav-count" id="nav-due">0</span></button>
+    <button class="nav-item" data-view="library"><span class="nav-icon">▤</span>知识库<span class="nav-count" id="nav-total">0</span></button>
+    <button class="nav-item" data-view="insights"><span class="nav-icon">▥</span>学习洞察</button>
+  </nav>
+  <div class="side-note"><span class="tiny-label">THE LONG GAME</span><p>不必一次学完。<br>只需比昨天，<br><em>多记住一点。</em></p><div class="seed-line"><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="local-badge"><span class="status-dot"></span><span>本地优先 · 完全离线<small>不上传笔记，不请求外部资源</small></span></div>
+</aside>
+<main id="main">
+  <header class="topbar"><div class="breadcrumb">我的学习空间 <span>/</span> <strong id="view-label">今日学习</strong></div><div class="top-actions"><span id="data-mode" class="mode-pill">数据快照</span><button id="help" class="icon-button" aria-label="使用说明">?</button></div></header>
+  <section id="today-view" class="view">
+    <div class="page-heading"><div><div class="eyebrow" id="date-label"></div><h1>今天，也进步一点。</h1><p class="subtitle">把注意力留给学习，把复习顺序交给计划。</p></div><span class="edition">FOCUS EDITION <span>01</span></span></div>
+    <div class="stats-grid stat-cards" id="stats"></div>
+    <div class="workspace-grid">
+      <div class="main-column">
+        <section class="focus-banner"><div><div class="eyebrow">YOUR NEXT SMALL STEP</div><h2 id="hero-title">从一次主动回忆开始。</h2><p id="hero-copy"></p><button class="primary" id="start-focus">开始专注 <span>↗</span></button></div><div class="orbit" aria-hidden="true"><div class="orbit-ring"></div><div class="orbit-core"><span id="hero-count">0</span><small>个小目标</small></div><i class="orbit-dot"></i><span class="orbit-caption">ONE STEP AT A TIME</span></div></section>
+        <section class="panel plan-panel"><div class="section-heading"><div><h2>今日学习计划 <span class="count-pill" id="plan-count">0</span></h2><p>先处理到期复习，再安排前置知识已就绪的新概念。</p></div><button class="text-button" id="export-plan">导出计划 ↓</button></div><div class="plan-controls"><div class="segmented" role="group" aria-label="计划时长"><button data-budget="15">15 分钟</button><button class="selected" data-budget="25" aria-pressed="true">25 分钟</button><button data-budget="45">45 分钟</button></div><span id="plan-estimate" class="muted"></span></div><div id="plan-list"></div><div id="plan-footnote" class="panel-footnote"></div></section>
+        <section class="panel activity-panel"><div class="section-heading"><div><h2>每一次回忆，都算数。</h2><p>最近 12 周的复习记录</p></div><span class="activity-total" id="activity-total"></span></div><div id="calendar-chart" class="heatmap" role="img" aria-label="最近12周学习活动"></div><div class="heat-legend"><span>坚持比强度更重要</span><div>少 <i></i><i></i><i></i><i></i> 多</div></div></section>
+      </div>
+      <div class="right-column">
+        <section class="panel timer-panel"><div class="section-heading"><h2>给自己一段专注</h2><span class="small-tag">FOCUS</span></div><div class="timer" id="timer-text" role="timer" aria-label="剩余专注时间">25:00</div><p id="timer-status" class="timer-status">一次只做一件事，就很好。</p><div class="timer-controls"><button class="primary" id="timer-toggle">开始计时</button><button class="secondary" id="timer-reset" aria-label="重置专注计时">重置</button></div><label class="timer-label" for="timer-duration">专注时长<select id="timer-duration"><option value="15">15 分钟</option><option value="25" selected>25 分钟</option><option value="45">45 分钟</option></select></label><div class="timer-note">计时不等于复习完成，不会修改学习记录。</div></section>
+        <section class="panel mastery-panel"><div class="section-heading"><h2>知识正在扎根</h2><span class="small-tag">MASTERY</span></div><div id="distribution-chart"></div><div id="mastery-legend" class="mastery-legend"></div><p class="insight-note">掌握不代表永远记住。已掌握的概念，也会按计划再次出现。</p></section>
+        <section class="gentle-card"><span class="eyebrow">A BETTER WAY TO REMEMBER</span><h3>先回忆，再翻笔记。</h3><p>用自己的话解释一个概念，比再读一遍更能暴露知识缺口。想不起来也没关系，那正是复习的起点。</p></section>
+      </div>
+    </div>
+  </section>
+  <section id="library-view" class="view" hidden><div class="page-heading"><div><div class="eyebrow">YOUR KNOWLEDGE, CONNECTED</div><h1>每一个概念，都有位置。</h1><p class="subtitle">搜索知识、查看前置依赖，找到下一块拼图。</p></div></div><div class="library-toolbar"><label class="search-wrap"><span>⌕</span><input id="search" type="search" placeholder="搜索概念、编号或类型…" aria-label="搜索知识库"></label><label class="filter-wrap">筛选<select id="filter"><option value="all">全部概念</option><option value="due">到期复习</option><option value="new">尚未开始</option><option value="mastered">已掌握</option></select></label></div><div id="library-summary" class="muted"></div><div id="library-list" class="library-grid"></div></section>
+  <section id="insights-view" class="view" hidden><div class="page-heading"><div><div class="eyebrow">LOOK BACK, MOVE FORWARD</div><h1>看见自己的积累。</h1><p class="subtitle">不和别人比较，只看真实的学习记录。</p></div></div><div class="insights-grid"><section class="panel"><div class="section-heading"><h2>未来 7 天 · 复习预报</h2></div><div id="forecast-chart" class="bar-chart"></div><p class="muted">仅统计已排期的可学习概念；不含逾期和未开始项。</p></section><section class="panel"><div class="section-heading"><h2>回忆体验分布</h2></div><div id="rating-chart"></div></section><section class="panel"><div class="section-heading"><h2>近期掌握度变化</h2></div><div id="mastery-chart"></div></section><section class="panel"><div class="section-heading"><h2>前置知识关系</h2></div><div id="graph-chart"></div></section></div></section>
+  <footer><span>Study Planner · 把学习变成可持续的日常</span><span id="snapshot-label"></span></footer>
+</main>
+</div>
+<dialog id="detail-dialog" aria-labelledby="detail-title"><div class="dialog-top"><span class="eyebrow">KNOWLEDGE NOTE</span><button class="icon-button" id="close-detail" aria-label="关闭概念详情">×</button></div><h2 id="detail-title"></h2><div id="detail-content"></div></dialog>
+<dialog id="help-dialog" aria-labelledby="help-title"><div class="dialog-top"><span class="eyebrow">LOCAL FIRST</span><button class="icon-button" id="close-help" aria-label="关闭使用说明">×</button></div><h2 id="help-title">这里是你的离线学习工作台。</h2><p>这是生成时的数据快照，不是实时数据库。计划、搜索、筛选和计时均可离线使用；刷新页面会重置计时。</p><p>复习评分仍在原有命令行中完成，评分后重新生成工作台即可看到最新数据。这里不会写入 SQLite 或修改笔记。</p><p>计划时长是启发式估算，不是学习效果预测。演示模式的数据全部为合成示例。</p><p><strong>键盘快捷键</strong>：空格 = 开始/暂停计时 · R = 重置 · 1/2/3 = 切换页面 · / = 搜索</p></dialog>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<script type="application/json" id="workspace-data">__DATA__</script>
+<script>__SCRIPT__</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 {
   "vault_path": "/path/to/your/Obsidian/Vault",
-  "db_path": "/path/to/study-planner/data/study_planner.db",
+  "db_path": "data/study_planner.db",
   "mastery_threshold": 0.7,
   "review_zone": [0.6, 0.8],
   "bkt_defaults": {

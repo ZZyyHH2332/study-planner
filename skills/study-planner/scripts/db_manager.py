@@ -18,11 +18,24 @@ def load_config(config_path=None):
     Falls back to a default path relative to this script if not specified.
     """
     if config_path is None:
-        script_dir = Path(__file__).resolve().parent
-        config_path = script_dir.parent.parent.parent / "config.json"
-
-    with open(config_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        config_path = Path(__file__).resolve().parents[3] / "config.json"
+    config_path = Path(config_path).expanduser().resolve()
+    if not config_path.is_file():
+        raise FileNotFoundError(
+            f"Configuration not found: {config_path}. Copy config.example.json to "
+            "config.json and set your paths, or run launch.py --demo."
+        )
+    with config_path.open("r", encoding="utf-8-sig") as f:
+        config = json.load(f)
+    if not isinstance(config, dict):
+        raise ValueError("Configuration must be a JSON object.")
+    for key in ("db_path", "vault_path"):
+        value = config.get(key)
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"Configuration requires a non-empty {key}.")
+        path = Path(value).expanduser()
+        config[key] = str((path if path.is_absolute() else config_path.parent / path).resolve())
+    return config
 
 
 def get_db_path(config=None):
@@ -385,8 +398,10 @@ def get_stats(config=None):
         "SELECT COUNT(*) as c FROM knowledge_edges"
     ).fetchone()["c"]
 
+    effective_config = config if config is not None else load_config()
+    threshold = float(effective_config.get("mastery_threshold", 0.7))
     stats["mastered_nodes"] = conn.execute(
-        "SELECT COUNT(*) as c FROM knowledge_nodes WHERE mastery >= 0.7"
+        "SELECT COUNT(*) as c FROM knowledge_nodes WHERE mastery >= ?", (threshold,)
     ).fetchone()["c"]
 
     stats["total_reviews"] = conn.execute(
