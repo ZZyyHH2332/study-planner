@@ -77,6 +77,10 @@ class StudySession:
         Returns:
             dict with BKT and FSRS results
         """
+        if type(rating) is not int or rating not in fsrs_engine.RATING_NAMES:
+            raise ValueError("Rating must be an integer from 1 to 4.")
+        if db_manager.get_node(note_id, self.config) is None:
+            raise ValueError(f"Node {note_id} not found.")
         if self.session_id is None:
             self.start()
 
@@ -136,14 +140,15 @@ class StudySession:
                SET new_interval = ?, prev_interval = ?, ease_factor = ?
                WHERE id = (
                    SELECT id FROM review_log
-                   WHERE note_id = ?
-                   ORDER BY created_at DESC LIMIT 1
+                   WHERE note_id = ? AND session_id = ?
+                   ORDER BY created_at DESC, id DESC LIMIT 1
                )""",
             (
                 fsrs_result.get("new_interval"),
                 fsrs_result.get("prev_interval"),
                 fsrs_result.get("ease_factor"),
                 note_id,
+                self.session_id,
             ),
         )
         conn.commit()
@@ -259,7 +264,7 @@ class StudySession:
         fm_text = parts[1]
         body = parts[2]
 
-        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        today = datetime.now().strftime("%Y-%m-%d")
 
         conn = db_manager.get_connection(self.config)
         review_count_row = conn.execute(

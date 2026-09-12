@@ -574,7 +574,24 @@ def show_data_management(config):
 
 
 def main():
-    config = db_manager.load_config()
+    import argparse
+    parser = argparse.ArgumentParser(description="Study Planner - local learning assistant")
+    parser.add_argument("--demo", action="store_true", help="Generate an offline demo without config or vault access")
+    parser.add_argument("--dashboard", action="store_true", help="Generate a read-only workspace from your database")
+    parser.add_argument("--config", type=Path, help="Configuration file path")
+    parser.add_argument("--output", type=Path, help="Dashboard HTML output path")
+    parser.add_argument("--no-open", action="store_true", help="Do not open the browser")
+    args = parser.parse_args()
+    if args.demo:
+        print(dashboard.generate_demo(args.output, not args.no_open))
+        return
+    try:
+        config = db_manager.load_config(args.config)
+    except (OSError, ValueError) as exc:
+        parser.exit(2, f"配置错误: {exc}\n先运行 python launch.py --demo，或复制 config.example.json 为 config.json 并填写路径。\n")
+    if args.dashboard:
+        print(dashboard.generate_dashboard(config, args.output, not args.no_open))
+        return
     db_manager.init_database(config)
     profile_manager.init_profile(config)
 

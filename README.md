@@ -1,5 +1,35 @@
 # Study Planner — 基于学习者行为与特征的个性化学习 AI
 
+## Focus Edition：离线学习工作台
+
+保留原有 Python / SQLite / Obsidian 学习流程，把数据看板升级为可操作的学习工作台。
+
+```bash
+# 无需配置、无需安装依赖、不读取笔记库：用合成数据体验
+python launch.py --demo
+
+# 不自动打开浏览器，指定单文件 HTML 输出
+python launch.py --demo --no-open --output data/demo.html
+
+# 已配置并完成初次扫描后，从自己的数据库生成工作台
+python launch.py --dashboard --no-open
+
+# 运行安全回归测试：只使用临时数据库，不扫描真实 Vault
+python -m unittest discover -s tests -v
+```
+
+- **今日计划**：15 / 25 / 45 分钟预算；逾期复习优先、到期复习其次、新概念最后。新概念存在未掌握、缺失或循环前置依赖时不自动排入。时长为启发式估算。
+- **知识库**：搜索、到期/未开始/已掌握筛选、概念详情、前置依赖提示。
+- **专注计时**：开始、暂停、继续、重置；后台标签页通过截止时间校正计时。刷新页面会重置，不自动产生学习记录。
+- **学习洞察**：84 天活动、7 天复习预报、评分分布、掌握度变化、前置关系。统计以本地日历日为准。
+- **真正离线**：HTML 内嵌样式、脚本和数据，不依赖 CDN、外部字体或服务端。适配桌面与手机。
+- **安全边界**：工作台为只读快照，不提供浏览器评分写入。请继续在命令行中复习评分，再重新生成；演示数据与真实数据库完全分离。真实快照包含概念标题和本地路径，分享前注意隐私。
+
+本版修复配置文件定位、相对路径解析、已掌握概念不再进入到期队列、Hard 间隔大于 Good、同秒日志排序不稳定，以及会话中新建的未排期日志遮挡上次复习间隔的问题。无效评分在会话开始前即被拒绝。
+
+> 算法说明：当前 `fsrs_engine.py` 是 ease-factor 驱动的简化 SM-2 / FSRS-inspired 调度器，不是完整标准 FSRS 实现。Again 仍采用当天复习的日期粒度，尚未实现精确的 10 分钟重学队列。原有参数校准、元认知诊断和数据管理继续通过命令行使用。
+
+
 ## 项目宗旨
 
 **让 Obsidian 笔记变成一个懂你的个性化学习 AI。**
@@ -76,7 +106,7 @@ Study Planner 解决这两个问题：
                             ┌─────────────▼────────────┐
                             │  Phase 4: 看板+校准     │
                             │                          │
-                            │  dashboard.py (ECharts)  │
+                            │  dashboard.py (离线 HTML)  │
                             │  param_calibrator.py     │
                             │  metacognition.py        │
                             │  data_io.py              │
@@ -158,7 +188,7 @@ study-planner/
 │   │   │   ├── fsrs_engine.py       # 间隔重复调度
 │   │   │   ├── profile_manager.py   # 学习者画像
 │   │   │   ├── session_sync.py      # 会话级同步
-│   │   │   ├── dashboard.py        # ECharts 数据看板
+│   │   │   ├── dashboard.py        # 离线 HTML 数据看板
 │   │   │   ├── param_calibrator.py  # BKT/FSRS 参数校准
 │   │   │   └── data_io.py           # 数据导出/导入
 │   │   └── references/
@@ -192,17 +222,18 @@ study-planner/
 ### 安装
 
 ```bash
-git clone https://github.com/yourname/study-planner.git
+git clone https://github.com/ZZyyHH2332/study-planner.git
 cd study-planner
-pip install pyyaml
+# PyYAML 仅在需要完整 YAML 解析时安装；演示工作台不需要它
+python -m pip install pyyaml
 ```
 
-编辑 `config.json` 指向你的 Vault 路径：
+将 `config.example.json` 复制为项目根目录的 `config.json`，编辑 Vault 路径。相对路径以配置文件所在目录为基准，而不是运行命令时的工作目录：
 
 ```json
 {
     "vault_path": "D:/MyVault",
-    "db_path": "D:/Trae CN/study-planner/data/study_planner.db",
+    "db_path": "data/study_planner.db",
     "mastery_threshold": 0.7
 }
 ```
@@ -300,7 +331,7 @@ knowledge_edges     bkt_engine    fsrs_engine
 
 - [x] **Phase 3** — 自适应引擎（路径生成 + 缺口检测 + IRT 自测）
 
-- [x] **Phase 4** — 数据看板（ECharts 可视化 + 参数校准 + 元认知 + 数据导入导出）
+- [x] **Phase 4** — 数据看板（离线 HTML 可视化 + 参数校准 + 元认知 + 数据导入导出）
 
 ***
 

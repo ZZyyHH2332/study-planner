@@ -70,6 +70,8 @@ def calculate_interval(repetition, ease_factor, rating, prev_interval=0):
     Returns:
         (new_interval_days, new_ease_factor, new_repetition)
     """
+    if type(rating) is not int or rating not in RATING_NAMES:
+        raise ValueError("Rating must be an integer from 1 to 4.")
     ease = max(MIN_EASE_FACTOR, ease_factor)
 
     if rating == RATING_AGAIN:
@@ -82,7 +84,7 @@ def calculate_interval(repetition, ease_factor, rating, prev_interval=0):
         modifier = {RATING_HARD: 3, RATING_GOOD: 4, RATING_EASY: 8}
         new_interval = modifier.get(rating, 4)
     else:
-        modifier = {RATING_HARD: ease * 1.2, RATING_GOOD: ease, RATING_EASY: ease * 1.3}
+        modifier = {RATING_HARD: 1.2, RATING_GOOD: ease, RATING_EASY: ease * 1.3}
         growth = modifier.get(rating, ease)
         new_interval = max(1, round(prev_interval * growth))
 
@@ -111,6 +113,8 @@ def schedule_review(note_id, rating, config=None):
     Returns:
         dict with scheduling info
     """
+    if type(rating) is not int or rating not in RATING_NAMES:
+        raise ValueError("Rating must be an integer from 1 to 4.")
     node = db_manager.get_node(note_id, config)
     if node is None:
         return {"error": f"Node {note_id} not found"}
@@ -132,7 +136,7 @@ def schedule_review(note_id, rating, config=None):
     conn = db_manager.get_connection(config)
     last_review_row = conn.execute(
         """SELECT new_interval FROM review_log
-           WHERE note_id = ? ORDER BY created_at DESC LIMIT 1""",
+           WHERE note_id = ? AND new_interval IS NOT NULL ORDER BY created_at DESC, id DESC LIMIT 1""",
         (note_id,)
     ).fetchone()
     conn.close()
@@ -147,7 +151,7 @@ def schedule_review(note_id, rating, config=None):
         repetition, prev_ease, rating, prev_interval
     )
 
-    today = datetime.now(timezone.utc)
+    today = datetime.now().astimezone()
     if new_interval > 0:
         next_review_date = today + timedelta(days=new_interval)
     else:
@@ -190,49 +194,35 @@ def schedule_review(note_id, rating, config=None):
 
 
 def get_due_reviews(config=None):
-    """Get all knowledge nodes that are due for review.
-
-    Returns nodes where next_review <= today and learning_state != 'mastered'.
-    """
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    conn = db_manager.get_connection(config)
-
-    rows = conn.execute(
-        """SELECT * FROM knowledge_nodes
-           WHERE learning_state != 'mastered'
-           AND concept_type NOT IN ('moc', 'literature', 'stub')
-           AND (next_review IS NULL OR next_review <= ?)
-           ORDER BY difficulty ASC""",
-        (today,)
-    ).fetchall()
-
-    conn.close()
-    return [dict(r) for r in rows]
+    """Return all due/new learnable nodes, including mastered nodes when due."""
+    return get_review_queue(limit=None, config=config)
 
 
 def get_review_queue(limit=20, config=None):
-    """Get a prioritized review queue.
+    """Prioritize overdue, then due today, then never scheduled.
 
-    Prioritizes: overdue reviews first, then lowest mastery, then highest difficulty.
+    Scheduled dates use the local calendar, matching schedule_review and the
+    offline workspace. Mastery is not an exemption from future reviews.
     """
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    if limit is not None and (type(limit) is not int or limit < 0):
+        raise ValueError("Limit must be a non-negative integer or None.")
+    today = datetime.now().strftime("%Y-%m-%d")
     conn = db_manager.get_connection(config)
-
-    rows = conn.execute(
-        """SELECT * FROM knowledge_nodes
-           WHERE learning_state != 'mastered'
-           AND concept_type NOT IN ('moc', 'literature', 'stub')
-           AND (next_review IS NULL OR next_review <= ?)
-           ORDER BY
-             CASE WHEN next_review IS NULL THEN 0 ELSE 1 END,
-             mastery ASC,
-             difficulty DESC
-           LIMIT ?""",
-        (today, limit)
-    ).fetchall()
-
-    conn.close()
-    return [dict(r) for r in rows]
+    try:
+        rows = conn.execute(
+            """SELECT * FROM knowledge_nodes
+               WHERE TRIM(COALESCE(concept_type, '')) NOT IN ('', 'moc', 'literature', 'stub')
+               AND (next_review IS NULL OR next_review = '' OR next_review <= ?)
+               ORDER BY
+                 CASE WHEN next_review IS NULL OR next_review = '' THEN 2
+                      WHEN next_review < ? THEN 0 ELSE 1 END,
+                 next_review ASC, mastery ASC, difficulty DESC, note_id ASC
+               LIMIT ?""",
+            (today, today, -1 if limit is None else limit)
+        ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
 
 
 def predict_retention(note_id, days_since_review=None, config=None):
@@ -268,7 +258,7 @@ def predict_retention(note_id, days_since_review=None, config=None):
         interval = 1
         conn = db_manager.get_connection(config)
         last_log = conn.execute(
-            "SELECT new_interval FROM review_log WHERE note_id = ? ORDER BY created_at DESC LIMIT 1",
+            "SELECT new_interval FROM review_log WHERE note_id = ? AND new_interval IS NOT NULL ORDER BY created_at DESC, id DESC LIMIT 1",
             (note_id,)
         ).fetchone()
         conn.close()
