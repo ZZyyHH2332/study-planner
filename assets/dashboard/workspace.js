@@ -151,7 +151,12 @@
   $("graph-chart").innerHTML = relations.length ? relations.slice(0,8).map(e => `<div class="relation-row"><button data-note="${escapeHTML(e.source_id)}">${escapeHTML(byId.get(e.source_id).title)}</button><span>→</span><button data-note="${escapeHTML(e.target_id)}">${escapeHTML(byId.get(e.target_id).title)}</button></div>`).join("") + (relations.length > 8 ? '<p class="muted">显示前 8 组关系。完整前置关系可在概念详情中查看。</p>' : "") : '<div class="empty">还没有前置知识关系。</div>';
   // Keyboard shortcuts: Space=toggle timer, R=reset, 1/2/3=nav, /=search, Esc=close dialog
   document.addEventListener("keydown", (e) => {
-    if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "SELECT") return;
+    const tag = document.activeElement?.tagName;
+    const typing = tag === "INPUT" || tag === "SELECT";
+    // Escape releases a focused field so shortcuts work again; without this the
+    // "/" shortcut traps focus in the search box and every shortcut goes dead.
+    if (typing && e.key === "Escape") { document.activeElement.blur(); return; }
+    if (typing) return;
     if (e.key === " ") { e.preventDefault(); $("timer-toggle").click(); }
     else if (e.key === "r" || e.key === "R") { $("timer-reset").click(); }
     else if (e.key === "1") { location.hash = "today"; setView("today"); }
