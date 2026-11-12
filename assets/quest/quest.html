@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<meta name="referrer" content="no-referrer">
+<title>Study Planner · 学习冒险旅程</title>
+<style>__STYLES__</style>
+</head>
+<body>
+<a class="skip-link" href="#main">跳到主要内容</a>
+<div class="app-shell">
+<aside class="sidebar">
+  <a class="brand" href="#journey" aria-label="Study Planner Quest"><span class="brand-mark">✦</span><span>study planner<small>QUEST EDITION · 让学习成为冒险</small></span></a>
+  <div class="side-label">冒险旅程 / QUEST</div>
+  <nav aria-label="主导航">
+    <button class="nav-item active" data-view="journey"><span class="nav-icon">⬡</span>冒险地图<span class="nav-count" id="nav-quest">0</span></button>
+    <button class="nav-item" data-view="achievements"><span class="nav-icon">★</span>成就之墙<span class="nav-count" id="nav-ach">0</span></button>
+    <button class="nav-item" data-view="territories"><span class="nav-icon">▲</span>知识领地<span class="nav-count" id="nav-total">0</span></button>
+    <button class="nav-item" data-view="insights"><span class="nav-icon">◎</span>星图洞察</button>
+  </nav>
+  <div class="side-profile" id="side-profile"></div>
+  <div class="local-badge"><span class="status-dot"></span><span>本地优先 · 完全离线<small>不上传笔记，不请求外部资源</small></span></div>
+</aside>
+<main id="main">
+  <header class="topbar"><div class="breadcrumb">学习冒险 <span>/</span> <strong id="view-label">冒险地图</strong></div><div class="top-actions"><span id="data-mode" class="mode-pill">数据快照</span><button id="help" class="icon-button" aria-label="使用说明">?</button></div></header>
+
+  <!-- ════════ JOURNEY VIEW ════════ -->
+  <section id="journey-view" class="view">
+    <div class="page-heading">
+      <div>
+        <div class="eyebrow" id="date-label"></div>
+        <h1 id="journey-title">今天，又一个故事开始了。</h1>
+        <p class="subtitle" id="journey-subtitle"></p>
+      </div>
+      <span class="edition">QUEST EDITION <span>✦</span></span>
+    </div>
+
+    <!-- Hero: Level + XP + Campfire -->
+    <div class="hero-section">
+      <div class="hero-left">
+        <div class="level-card" id="level-card">
+          <div class="level-badge" id="level-badge">1</div>
+          <div class="level-info">
+            <div class="level-name" id="level-name">萌芽</div>
+            <div class="level-title" id="level-title">Seedling</div>
+            <div class="level-desc" id="level-desc"></div>
+            <div class="xp-bar"><div class="xp-fill" id="xp-fill"></div><span class="xp-text" id="xp-text">0 XP</span></div>
+            <div class="xp-detail" id="xp-detail"></div>
+          </div>
+        </div>
+        <div class="campfire-card">
+          <div class="campfire" id="campfire">
+            <div class="flame l1"></div><div class="flame l2"></div><div class="flame l3"></div>
+            <div class="flame l4"></div><div class="flame l5"></div>
+            <div class="embers"></div>
+          </div>
+          <div class="campfire-info">
+            <div class="campfire-streak" id="campfire-streak">0</div>
+            <div class="campfire-label">天连击</div>
+            <div class="campfire-sub" id="campfire-sub">篝火尚未点燃</div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-right">
+        <div class="stats-grid" id="stats"></div>
+      </div>
+    </div>
+
+    <!-- Narrative -->
+    <section class="narrative-banner" id="narrative-banner">
+      <div class="narrative-text" id="narrative-text"></div>
+      <div class="narrative-context" id="narrative-context"></div>
+    </section>
+
+    <!-- Today's Quest -->
+    <section class="panel quest-panel">
+      <div class="section-heading">
+        <div><h2>今日远征 <span class="count-pill" id="quest-count">0</span></h2><p>每个概念都是一片等待探索的领地。先回应最急切的召唤。</p></div>
+        <div class="quest-controls">
+          <div class="segmented" role="group" aria-label="远征时长">
+            <button data-budget="15">15 分钟</button>
+            <button class="selected" data-budget="25" aria-pressed="true">25 分钟</button>
+            <button data-budget="45">45 分钟</button>
+          </div>
+          <span id="quest-estimate" class="muted"></span>
+        </div>
+      </div>
+      <div id="quest-list"></div>
+      <div id="quest-footnote" class="panel-footnote"></div>
+    </section>
+
+    <!-- Activity map -->
+    <section class="panel activity-panel">
+      <div class="section-heading">
+        <div><h2>足迹地图</h2><p>最近 12 周的探索记录</p></div>
+        <span class="activity-total" id="activity-total"></span>
+      </div>
+      <div id="calendar-chart" class="heatmap" role="img" aria-label="最近12周学习活动"></div>
+      <div class="heat-legend"><span>每一步都算数</span><div>少 <i></i><i></i><i></i><i></i> 多</div></div>
+    </section>
+
+    <!-- Focus timer -->
+    <section class="panel timer-panel">
+      <div class="section-heading"><h2>专注结界</h2><span class="small-tag">FOCUS</span></div>
+      <div class="timer" id="timer-text" role="timer" aria-label="剩余专注时间">25:00</div>
+      <p id="timer-status" class="timer-status">一次只做一件事，就很好。</p>
+      <div class="timer-controls">
+        <button class="primary" id="timer-toggle">开始计时</button>
+        <button class="secondary" id="timer-reset" aria-label="重置专注计时">重置</button>
+      </div>
+      <label class="timer-label" for="timer-duration">专注时长<select id="timer-duration"><option value="15">15 分钟</option><option value="25" selected>25 分钟</option><option value="45">45 分钟</option></select></label>
+    </section>
+  </section>
+
+  <!-- ════════ ACHIEVEMENTS VIEW ════════ -->
+  <section id="achievements-view" class="view" hidden>
+    <div class="page-heading"><div><div class="eyebrow">YOUR TROPHIES</div><h1>每一枚徽章，都是一段故事。</h1><p class="subtitle">不是奖励让你前进，是前进让你值得被记住。</p></div></div>
+    <div class="achievement-summary" id="achievement-summary"></div>
+    <div id="achievement-grid" class="achievement-grid"></div>
+  </section>
+
+  <!-- ════════ TERRITORIES VIEW ════════ -->
+  <section id="territories-view" class="view" hidden>
+    <div class="page-heading"><div><div class="eyebrow">YOUR KINGDOM</div><h1>从废墟到大厦。</h1><p class="subtitle">每一个概念都是一片领地。掌握它，就是在这里建起一座灯塔。</p></div></div>
+    <div class="territory-toolbar">
+      <label class="search-wrap"><span>⌕</span><input id="search" type="search" placeholder="搜索领地…" aria-label="搜索知识领地"></label>
+      <label class="filter-wrap">筛选<select id="filter"><option value="all">全部领地</option><option value="overdue">呼唤你回去</option><option value="due">今日召唤</option><option value="new">全新领域</option><option value="established">已建成</option><option value="building">建设中</option><option value="ruins">待开拓</option></select></label>
+    </div>
+    <div class="territory-stats-bar" id="territory-stats-bar"></div>
+    <div id="territory-list" class="territory-grid"></div>
+  </section>
+
+  <!-- ════════ INSIGHTS VIEW ════════ -->
+  <section id="insights-view" class="view" hidden>
+    <div class="page-heading"><div><div class="eyebrow">STAR MAP</div><h1>知识的星图。</h1><p class="subtitle">不和别人比较，只看自己的星座如何生长。</p></div></div>
+    <div class="insights-grid">
+      <section class="panel"><div class="section-heading"><h2>本周经验值</h2></div><div id="xp-chart" class="bar-chart"></div><p class="muted">每次复习都在积累经验，困难越大，收获越多。</p></section>
+      <section class="panel"><div class="section-heading"><h2>未来 7 天 · 远征预报</h2></div><div id="forecast-chart" class="bar-chart"></div><p class="muted">哪些领地将要到期？提前做好准备。</p></section>
+      <section class="panel"><div class="section-heading"><h2>挑战难度分布</h2></div><div id="encounter-chart"></div></section>
+      <section class="panel"><div class="section-heading"><h2>领地建设进度</h2></div><div id="territory-progress"></div></section>
+    </div>
+  </section>
+
+  <footer><span>Study Planner · Quest Edition · 让学习成为一场值得记住的冒险</span><span id="snapshot-label"></span></footer>
+</main>
+</div>
+
+<dialog id="detail-dialog" aria-labelledby="detail-title">
+  <div class="dialog-top"><span class="eyebrow" id="detail-eyebrow">TERRITORY</span><button class="icon-button" id="close-detail" aria-label="关闭详情">×</button></div>
+  <h2 id="detail-title"></h2>
+  <div id="detail-content"></div>
+</dialog>
+
+<dialog id="help-dialog" aria-labelledby="help-title">
+  <div class="dialog-top"><span class="eyebrow">QUEST EDITION</span><button class="icon-button" id="close-help" aria-label="关闭说明">×</button></div>
+  <h2 id="help-title">欢迎来到你的学习冒险旅程。</h2>
+  <p>这是生成时的数据快照。你的学习记录不会被修改，所有评分仍在原有命令行中完成。</p>
+  <p><strong>这里的一切都是叙事化的数据视图</strong>：经验值来自真实复习次数和评分，等级反映你的积累，成就由实际里程碑解锁，领地状态就是掌握度。没有虚假的奖励，只有真实的成长被重新讲述。</p>
+  <p><strong>键盘快捷键</strong>：空格 = 开始/暂停计时 · R = 重置 · 1/2/3/4 = 切换页面 · / = 搜索领地</p>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<script type="application/json" id="quest-data">__DATA__</script>
+<script>__SCRIPT__</script>
+</body>
+</html>
