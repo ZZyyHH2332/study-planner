@@ -87,6 +87,7 @@ def show_main_menu(config):
     print(f"  [{BOLD}6{RESET}] 知识缺口检测")
     print(f"  [{BOLD}7{RESET}] IRT 自测")
     print(f"  [{BOLD}8{RESET}] 查看数据看板")
+    print(f"  [{BOLD}q{RESET}] 生成冒险旅程 (Quest Edition)")
     print(f"  [{BOLD}9{RESET}] 数据管理")
     print(f"  [{BOLD}0{RESET}] 退出")
     print()
@@ -502,6 +503,25 @@ def show_dashboard(config):
     input(f"  {DIM}按回车返回菜单...{RESET}")
 
 
+def show_quest(config):
+    print_header()
+    print(f"  {BOLD}生成冒险旅程 (Quest Edition)...{RESET}\n")
+    import quest
+    html = quest.render_quest_html(
+        db_manager.get_all_nodes(config),
+        db_manager.get_edges(config=config), dashboard.query_review_log(config),
+        profile_manager.get_full_profile(config), config)
+    target = Path(db_manager.get_db_path(config)).parent / "quest.html"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(html, encoding="utf-8")
+    import webbrowser
+    webbrowser.open(target.resolve().as_uri())
+    print(f"  {GREEN}✓ 冒险旅程已生成并在浏览器打开{RESET}")
+    print(f"  {DIM}文件: {target}{RESET}")
+    print()
+    input(f"  {DIM}按回车返回菜单...{RESET}")
+
+
 def show_data_management(config):
     print_header()
     print(f"  {BOLD}数据管理{RESET}\n")
@@ -576,12 +596,18 @@ def show_data_management(config):
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="Study Planner - local learning assistant")
-    parser.add_argument("--demo", action="store_true", help="Generate an offline demo without config or vault access")
-    parser.add_argument("--dashboard", action="store_true", help="Generate a read-only workspace from your database")
+    parser.add_argument("--demo", action="store_true", help="Generate an offline Focus Edition demo without config or vault access")
+    parser.add_argument("--quest", action="store_true", help="Generate the Quest Edition game-like workspace")
+    parser.add_argument("--quest-demo", action="store_true", help="Generate a Quest Edition demo with synthetic data")
+    parser.add_argument("--dashboard", action="store_true", help="Generate a read-only Focus Edition workspace from your database")
     parser.add_argument("--config", type=Path, help="Configuration file path")
     parser.add_argument("--output", type=Path, help="Dashboard HTML output path")
     parser.add_argument("--no-open", action="store_true", help="Do not open the browser")
     args = parser.parse_args()
+    if args.quest_demo:
+        import quest
+        print(quest.generate_quest_demo(args.output, not args.no_open))
+        return
     if args.demo:
         print(dashboard.generate_demo(args.output, not args.no_open))
         return
@@ -589,6 +615,21 @@ def main():
         config = db_manager.load_config(args.config)
     except (OSError, ValueError) as exc:
         parser.exit(2, f"配置错误: {exc}\n先运行 python launch.py --demo，或复制 config.example.json 为 config.json 并填写路径。\n")
+    if args.quest:
+        import quest
+        html = quest.render_quest_html(
+            db_manager.get_all_nodes(config),
+            db_manager.get_edges(config=config),
+            dashboard.query_review_log(config),
+            profile_manager.get_full_profile(config), config)
+        target = args.output or Path(db_manager.get_db_path(config)).parent / "quest.html"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(html, encoding="utf-8")
+        if not args.no_open:
+            import webbrowser
+            webbrowser.open(target.resolve().as_uri())
+        print(f"Quest workspace generated: {target}")
+        return
     if args.dashboard:
         print(dashboard.generate_dashboard(config, args.output, not args.no_open))
         return
@@ -615,6 +656,8 @@ def main():
             start_quiz(config)
         elif choice == "8":
             show_dashboard(config)
+        elif choice == "q" or choice == "Q":
+            show_quest(config)
         elif choice == "9":
             show_data_management(config)
         elif choice == "0":
